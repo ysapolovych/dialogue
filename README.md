@@ -20,7 +20,7 @@ python app.py
 
 ## Roadmap
 - [ ] Refactor and mask code smell
-- [ ] Stream text outputs
+- [x] Stream text outputs
 - [ ] Handle LLM memory buffering properly
 - [ ] Add configurable generation config, templates, and roles
 - [ ] Add more API providers and self-hosted LLMs

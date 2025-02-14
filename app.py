@@ -101,36 +101,47 @@ def main():
 
     starting_chain = speaker_templates[1] | speakers[1] | StrOutputParser()
 
-    socrates_first = starting_chain.invoke(
+    line: str = ""
+    print(f"{RED}Socrates{RESET}: ", end="")
+    for chunk in starting_chain.stream(
         {
             "topic": topic,
             "name": user_name,
             "line": starter_line,
             "context": ""
         }
-    )
+    ):
+        print(chunk, end="")
+        line += chunk
+    print("\n")
 
-    print(f"{RED}Socrates{RESET}: {socrates_first}")
+    # print(f"{RED}Socrates{RESET}: {socrates_first}")
 
-    full_dialogue.append(f"Socrates: {socrates_first}")
+    full_dialogue.append(f"Socrates: {line}")
 
-    line: str
+    new_line: str = ""
     optional_line = input()
     if optional_line:
         line = optional_line
+        print(f"{GREEN}{user_name}{RESET}: {new_line}")
     else:
+        print(f"{GREEN}{user_name}{RESET}: ", end="")
         response_chain = speaker_templates[2] | speakers[2] | StrOutputParser()
         # Get the interlocutor's response
-        line = response_chain.invoke({
+        for chunk in response_chain.stream({
             "name": user_name,
             "topic": topic,
-            "line": socrates_first,
+            "line": line,
             "context": give_context(full_dialogue),
-        })
+        }):
+            print(chunk, end="")
+            new_line += chunk
 
-    print(f"{GREEN}{user_name}{RESET}: {line}")
+        print("\n")
 
-    full_dialogue.append(f"{user_name}: {starter_line}\n")
+    full_dialogue.append(f"{user_name}: {new_line}\n")
+
+    line = new_line
 
     while True:
         try:
@@ -148,16 +159,23 @@ def main():
                 # Select chain based on current speaker
                 chain = speaker_templates[current_speaker] | speakers[current_speaker] | StrOutputParser()
                 # Generate response using the chain
-                line: str = chain.invoke({
+                new_line: str = ""
+
+                print(f"{speaker_colors[current_speaker]}{speaker_names[current_speaker]}{RESET}: ", end="")
+                for chunk in chain.stream({
                     "line": line,
                     "topic": topic,
                     "name": speaker_names[current_speaker],
                     "context": give_context(full_dialogue),
-                })
+                }):
+                    print(chunk, end="")
+                    new_line += chunk
 
-                print(f"{speaker_colors[current_speaker]}{speaker_names[current_speaker]}{RESET}: {line}")
+                print("\n")
 
                 full_dialogue.append(f"{speaker_names[current_speaker]}: {line}")
+
+                line = new_line
 
         except Exception as e:
             print(f"Spartans are attacking! {e}")
